@@ -640,7 +640,7 @@ def replace(connection, module):
     instances = props['instances']
     if replace_instances:
         instances = replace_instances
-        
+
     #check if min_size/max_size/desired capacity have been specified and if not use ASG values
     if min_size is None:
         min_size = as_group.min_size
@@ -648,8 +648,8 @@ def replace(connection, module):
         max_size = as_group.max_size
     if desired_capacity is None:
         desired_capacity = as_group.desired_capacity
-    # check to see if instances are replaceable if checking launch configs
 
+    # check to see if instances are replaceable if checking launch configs
     new_instances, old_instances = get_instances_by_lc(props, lc_check, instances)
     num_new_inst_needed = desired_capacity - len(new_instances)
 
@@ -662,7 +662,7 @@ def replace(connection, module):
             changed = True
             return(changed, props)
 
-        #  we don't want to spin up extra instances if not necessary
+        # we don't want to spin up extra instances if not necessary
         if num_new_inst_needed < batch_size:
             log.debug("Overriding batch size to {0}".format(num_new_inst_needed))
             batch_size = num_new_inst_needed
@@ -673,7 +673,6 @@ def replace(connection, module):
       
     # set temporary settings and wait for them to be reached
     # This should get overwritten if the number of instances left is less than the batch size.
-
     as_group = connection.get_all_groups(names=[group_name])[0]
     update_size(as_group, max_size + batch_size, min_size + batch_size, desired_capacity + batch_size)
     wait_for_new_inst(module, connection, group_name, wait_timeout, as_group.min_size, 'viable_instances')
@@ -755,6 +754,12 @@ def terminate_batch(connection, module, replace_instances, initial_instances, le
     as_group = connection.get_all_groups(names=[group_name])[0]
     props = get_properties(as_group)
     desired_size = as_group.min_size
+
+    #check if min_size/max_size/desired capacity have been specified and if not use ASG values
+    if min_size is None:
+        min_size = as_group.min_size
+    if desired_capacity is None:
+        desired_capacity = as_group.desired_capacity
 
     new_instances, old_instances = get_instances_by_lc(props, lc_check, initial_instances)
     num_new_inst_needed = desired_capacity - len(new_instances)
