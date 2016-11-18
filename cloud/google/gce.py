@@ -246,11 +246,18 @@ EXAMPLES = '''
       register: gce
 
     - name: Save host data
-      add_host: hostname={{ item.public_ip }} groupname=gce_instances_ips
+      add_host:
+        hostname: "{{ item.public_ip }}"
+        groupname: gce_instances_ips
       with_items: "{{ gce.instance_data }}"
 
     - name: Wait for SSH for instances
-      wait_for: delay=1 host={{ item.public_ip }} port=22 state=started timeout=30
+      wait_for:
+        delay: 1
+        host: "{{ item.public_ip }}"
+        port: 22
+        state: started
+        timeout: 30
       with_items: "{{ gce.instance_data }}"
 
     - name: Configure Hosts
@@ -442,7 +449,7 @@ def create_instances(module, gce, instance_names, number):
     bad_perms = []
     if service_account_permissions:
         for perm in service_account_permissions:
-            if perm not in gce.SA_SCOPES_MAP.keys():
+            if perm not in gce.SA_SCOPES_MAP:
                 bad_perms.append(perm)
         if len(bad_perms) > 0:
             module.fail_json(msg='bad permissions: %s' % str(bad_perms))

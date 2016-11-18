@@ -223,7 +223,9 @@ requirements:
 author:
     - "Bruce Pennypacker (@bpennypacker)"
     - "Will Thames (@willthames)"
-
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 # FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD
@@ -299,9 +301,9 @@ EXAMPLES = '''
      instance_name: MyNewInstanceName
      region: us-west-2
      vpc_security_groups: sg-xxx945xx
-          
-- debug: msg="The new db endpoint is {{ rds.instance.endpoint }}"
 
+- debug:
+    msg: "The new db endpoint is {{ rds.instance.endpoint }}"
 '''
 
 import sys

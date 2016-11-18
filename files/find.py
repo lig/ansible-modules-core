@@ -66,7 +66,7 @@ options:
         required: false
         description:
             - Type of file to select
-        choices: [ "file", "directory" ]
+        choices: [ "file", "directory", "link" ]
         default: "file"
     recurse:
         required: false
@@ -118,19 +118,37 @@ options:
 
 EXAMPLES = '''
 # Recursively find /tmp files older than 2 days
-- find: paths="/tmp" age="2d" recurse=yes
+- find:
+    paths: "/tmp"
+    age: "2d"
+    recurse: yes
 
 # Recursively find /tmp files older than 4 weeks and equal or greater than 1 megabyte
-- find: paths="/tmp" age="4w" size="1m" recurse=yes
+- find:
+    paths: "/tmp"
+    age: "4w"
+    size: "1m"
+    recurse: yes
 
 # Recursively find /var/tmp files with last access time greater than 3600 seconds
-- find: paths="/var/tmp" age="3600" age_stamp=atime recurse=yes
+- find:
+    paths: "/var/tmp"
+    age: "3600"
+    age_stamp: atime
+    recurse: yes
 
 # find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
-- find: paths="/var/tmp" patterns="*.old,*.log.gz" size="10m"
+- find:
+    paths: "/var/tmp"
+    patterns: "*.old,*.log.gz"
+    size: "10m"
 
 # find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
-- find: paths="/var/tmp" patterns="^.*?\.(?:old|log\.gz)$" size="10m" use_regex=True
+- find:
+    paths: "/var/tmp"
+    patterns: "^.*?\.(?:old|log\.gz)$"
+    size: "10m"
+    use_regex: True
 '''
 
 RETURN = '''
@@ -257,7 +275,7 @@ def main():
             paths         = dict(required=True, aliases=['name','path'], type='list'),
             patterns      = dict(default=['*'], type='list', aliases=['pattern']),
             contains      = dict(default=None, type='str'),
-            file_type     = dict(default="file", choices=['file', 'directory'], type='str'),
+            file_type     = dict(default="file", choices=['file', 'directory', 'link'], type='str'),
             age           = dict(default=None, type='str'),
             age_stamp     = dict(default="mtime", choices=['atime','mtime','ctime'], type='str'),
             size          = dict(default=None, type='str'),
@@ -313,7 +331,7 @@ def main():
                        continue
 
                     try:
-                        st = os.stat(fsname)
+                        st = os.lstat(fsname)
                     except:
                         msg+="%s was skipped as it does not seem to be a valid file or it cannot be accessed\n" % fsname
                         continue
@@ -334,6 +352,11 @@ def main():
                             r.update(statinfo(st))
                             if params['get_checksum']:
                                 r['checksum'] = module.sha1(fsname)
+                            filelist.append(r)
+
+                    elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
+                        if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                            r.update(statinfo(st))
                             filelist.append(r)
 
                 if not params['recurse']:
